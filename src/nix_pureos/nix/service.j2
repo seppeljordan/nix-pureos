@@ -1,0 +1,14 @@
+[Unit]
+Description=Emacs: the extensible, self-documenting text editor
+
+[Service]
+ExecStart={{ execStart }}
+{% if execStop %}ExecStop={{ execStop }}{% endif %}
+Type={{ type }}
+Restart=on-failure
+{% for env in environment.keys() %}
+Environment={{ env }}={{ environment[env] }}
+{% endfor %}
+
+[Install]
+WantedBy=default.target
