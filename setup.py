@@ -28,6 +28,8 @@ setup(
                 'modules.nix',
                 'systemd.nix',
                 'service.j2',
+                'app.desktop.j2',
+                'desktop.nix',
             ]
         )))
     ],

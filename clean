@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+./clean
+rm -vfr \
+   result \
+   build \
+   src/nix_pureos.egg-info

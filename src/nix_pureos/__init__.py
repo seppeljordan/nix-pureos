@@ -3,7 +3,7 @@ import os.path
 import subprocess
 from copy import copy
 
-from xdg import XDG_CONFIG_HOME
+from xdg import XDG_CONFIG_HOME, XDG_DATA_HOME
 
 HERE = os.path.dirname(__file__)
 CONFIG_DIR=XDG_CONFIG_HOME + '/nix-pureos'
@@ -13,10 +13,17 @@ CONFIGURATION_NIX=os.path.join(
     CONFIG_DIR,
     'configuration.nix'
 )
+APPLICATIONS_USER_DIR=os.path.join(
+    XDG_DATA_HOME, 'applications/nix-pureos'
+)
+
+
+def no_handler(old, new):
+    pass
 
 
 class Generations(object):
-    def __init__(self, generation_prefix, generation_switch_handler):
+    def __init__(self, generation_prefix, generation_switch_handler=no_handler):
         self.current_generation = None
         self.generation_prefix = generation_prefix + '-'
         self.generation_switch_handler = generation_switch_handler
@@ -148,21 +155,38 @@ def systemd_switch_handler(old_profile, new_profile):
 
 
 def ensure_config_dirs_present():
-    for directory in [ CONFIG_DIR, GENERATIONS_DIR ]:
+    for directory in [ CONFIG_DIR, GENERATIONS_DIR, APPLICATIONS_USER_DIR ]:
         os.makedirs(directory, exist_ok=True)
 
 
-def build_systemd_services(
-        filename,
-        resultname=CONFIG_DIR + '/systemd-services'
-):
+def build_configuration_component(filename, component):
+    print("Build configuration component {component} to file '{filename}'".format(
+        component=component,
+        filename=filename,
+    ))
     build_env = copy(os.environ)
     build_env['NIX_PATH'] = build_env['NIX_PATH'] + ':nix-pureos=' + CONFIGURATION_NIX
+    nix_file = os.path.join(
+        HERE,
+        'nix/modules.nix'
+    )
     subprocess.run(
-        ['nix', 'build', '-f', filename, '--show-trace', '-o', resultname],
+        ['nix', 'build', '-f', nix_file, '--show-trace', '-o', filename, component],
         env=build_env,
     )
+    
 
+def build_systemd_services(
+        filename,
+):
+    build_configuration_component(filename, 'systemd-services')
+
+    
+def build_desktop_icons(
+        filename
+):
+    build_configuration_component(filename, 'desktop-items')
+    
 
 def get_generation_service_files(path):
     return (
@@ -181,13 +205,12 @@ def get_generation_service_files(path):
 def main():
     ensure_config_dirs_present()
     systemd_generations = Generations('nix-pureos-systemd', systemd_switch_handler)
-    systemd_generations.create_new_generation(
-        lambda filename: build_systemd_services(
-            os.path.join(HERE, 'nix/modules.nix'),
-            resultname=filename)
-    )
+    systemd_generations.create_new_generation(build_systemd_services)
     systemd_generations.install_current_generation(SYSTEMD_USER_DIR)
 
+    desktop_items_generations = Generations('nix-pureos-desktop-icons')
+    desktop_items_generations.create_new_generation(build_desktop_icons);
+    desktop_items_generations.install_current_generation(APPLICATIONS_USER_DIR);
 
 if __name__ == '__main__':
     main()

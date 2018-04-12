@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+nix build -f test_env.nix packages.nix-pureos
