@@ -23,4 +23,8 @@ in
 {
   systemd-services = systemd modules.config.systemd;
   desktop-items = desktopItems modules.config.desktopFiles;
+  packages = nixpkgs.buildEnv {
+    name = "all";
+    paths = modules.config.packages;
+  };
 }

@@ -62,6 +62,10 @@ in
         lib.types.submodule { options = desktopFilesCfg; }
       );
     };
+    packages = lib.mkOption {
+      default = [];
+      type = lib.types.listOf lib.types.package;
+    };
   };
   config = {
     _module.args = {
