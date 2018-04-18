@@ -8,52 +8,39 @@ from nix_pureos.generation import Generations
 from nix_pureos.paths import (APPLICATIONS_USER_DIR, CONFIG_DIR,
                               CONFIGURATION_NIX, GENERATIONS_DIR,
                               SYSTEMD_USER_DIR)
+from nix_pureos.systemd import SystemdUnit, systemd_daemon_reload, systemctl_preset_all
 
 HERE = os.path.dirname(__file__)
 
-def start_unit(unit):
-    subprocess.run(['systemctl', '--user', 'start', unit])
-
-
-def stop_unit(unit):
-    subprocess.run(['systemctl', '--user', 'stop', unit])
-
-
-def restart_unit(unit):
-    subprocess.run(['systemctl', '--user', 'restart', unit])
-
-
-def daemon_reload():
-    subprocess.run(['systemctl', '--user', 'daemon-reload'])
-
-
-def systemctl_preset_all():
-    subprocess.run(['systemctl', '--user', 'preset-all'])
-    
-
 def systemd_switch_handler(old_profile, new_profile):
-    old_units = set(filter(
-        lambda x: x.endswith('.service'),
-        os.listdir(old_profile)
+    old_units = set(map(
+        lambda x: SystemdUnit(x),
+        filter(
+            lambda x: x.endswith('.service'),
+            os.listdir(old_profile)
+        )
     ))
-    new_units = set(filter(
-        lambda x: x.endswith('.service'),
-        os.listdir(new_profile)
+    new_units = set(map(
+        lambda x: SystemdUnit(x),
+        filter(
+            lambda x: x.endswith('.service'),
+            os.listdir(new_profile)
+        )
     ))
 
     units_to_stop = old_units - new_units
     for unit in units_to_stop:
-        stop_unit(unit)
+        unit.stop()
 
-    daemon_reload()
+    systemd_daemon_reload()
 
     units_to_start = new_units - old_units
     for unit in units_to_start:
-        start_unit(unit)
+        unit.start()
 
     units_to_restart = old_units & new_units
     for unit in units_to_restart:
-        restart_unit(unit)
+        unit.restart()
 
     systemctl_preset_all()
 
