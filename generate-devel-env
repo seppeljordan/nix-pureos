@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+pypi2nix \
+    -V 3 \
+    -e .#egg=nix-pureos \
+    --default-overrides \
+    --basename test_env \
+    -e pygobject \
+    -E 'pkgconfig cairo gobjectIntrospection' \
+    -s 'pycairo' \
+    --overrides 'git+https://github.com/seppeljordan/nix-overlay.git#path=10-python3Packages/python3_override.nix'

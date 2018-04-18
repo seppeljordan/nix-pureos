@@ -8,20 +8,26 @@ from nix_pureos.generation import Generations
 from nix_pureos.paths import (APPLICATIONS_USER_DIR, CONFIG_DIR,
                               CONFIGURATION_NIX, GENERATIONS_DIR,
                               SYSTEMD_USER_DIR)
-from nix_pureos.systemd import SystemdUnit, systemd_daemon_reload, systemctl_preset_all
+from nix_pureos.systemd import SystemdSession, systemd_daemon_reload, systemctl_preset_all
 
 HERE = os.path.dirname(__file__)
 
 def systemd_switch_handler(old_profile, new_profile):
+
+    def file_content(path):
+        with open(path) as f:
+            return f.read()
+    
+    systemd_session = SystemdSession()
     old_units = set(map(
-        lambda x: SystemdUnit(x),
+        lambda x: systemd_session.get_unit(x),
         filter(
             lambda x: x.endswith('.service'),
             os.listdir(old_profile)
         )
     ))
     new_units = set(map(
-        lambda x: SystemdUnit(x),
+        lambda x: systemd_session.get_unit(x),
         filter(
             lambda x: x.endswith('.service'),
             os.listdir(new_profile)
@@ -40,7 +46,18 @@ def systemd_switch_handler(old_profile, new_profile):
 
     units_to_restart = old_units & new_units
     for unit in units_to_restart:
-        unit.restart()
+        old_unit_content = file_content(
+            os.path.join(old_profile, unit.name)
+        )
+
+        new_unit_content = file_content(
+            os.path.join(new_profile, unit.name)
+        )
+
+        if old_unit_content == new_unit_content:
+            unit.ensure_started()
+        else:
+            unit.restart()
 
     systemctl_preset_all()
 
@@ -64,7 +81,7 @@ def nix_file():
 
 
 def build_configuration_component(filename, component):
-    print("Build configuration component {component} to file '{filename}'".format(
+    print("Build configuration component '{component}' to file '{filename}'".format(
         component=component,
         filename=filename,
     ))
