@@ -10,6 +10,9 @@ serviceCfg = with lib; with lib.types;{
   "name" = mkOption {
     type = str;
   };
+  "description" = mkOption {
+    type = str;
+  };
   "type" = mkOption {
     type = enum [ "forking" "simple" "notify" ];
     default = "simple";
