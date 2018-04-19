@@ -125,6 +125,11 @@ def install_packages():
         env=nix_env()
     )
 
+
+def install_icons(old_profile, new_profile):
+    subprocess.run(['gtk-update-icon-cache'])
+
+
 @click.command('nix-pureos')
 @click.option('--collect-garbage',
               is_flag=True,
@@ -136,7 +141,7 @@ def main(collect_garbage):
     systemd_generations.create_new_generation(build_systemd_services)
     systemd_generations.install_current_generation(SYSTEMD_USER_DIR)
 
-    desktop_items_generations = Generations('nix-pureos-desktop-icons')
+    desktop_items_generations = Generations('nix-pureos-desktop-icons', install_icons)
     desktop_items_generations.create_new_generation(build_desktop_icons);
     desktop_items_generations.install_current_generation(APPLICATIONS_USER_DIR);
 
