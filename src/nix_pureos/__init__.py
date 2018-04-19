@@ -4,11 +4,13 @@ import subprocess
 from copy import copy
 from tempfile import TemporaryDirectory
 
+import click
 from nix_pureos.generation import Generations
 from nix_pureos.paths import (APPLICATIONS_USER_DIR, CONFIG_DIR,
                               CONFIGURATION_NIX, GENERATIONS_DIR,
                               SYSTEMD_USER_DIR)
-from nix_pureos.systemd import SystemdSession, systemd_daemon_reload, systemctl_preset_all
+from nix_pureos.systemd import (SystemdSession, systemctl_preset_all,
+                                systemd_daemon_reload)
 
 HERE = os.path.dirname(__file__)
 
@@ -123,8 +125,13 @@ def install_packages():
         env=nix_env()
     )
 
-def main():
+@click.command('nix-pureos')
+@click.option('--collect-garbage',
+              is_flag=True,
+)
+def main(collect_garbage):
     ensure_config_dirs_present()
+
     systemd_generations = Generations('nix-pureos-systemd', systemd_switch_handler)
     systemd_generations.create_new_generation(build_systemd_services)
     systemd_generations.install_current_generation(SYSTEMD_USER_DIR)
@@ -134,6 +141,10 @@ def main():
     desktop_items_generations.install_current_generation(APPLICATIONS_USER_DIR);
 
     install_packages()
+
+    if collect_garbage:
+        systemd_generations.delete_old_generations()
+        desktop_items_generations.delete_old_generations()
 
 if __name__ == '__main__':
     main()

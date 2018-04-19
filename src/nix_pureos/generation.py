@@ -1,7 +1,7 @@
 import os
 
-
 from nix_pureos.paths import GENERATIONS_DIR
+
 
 def no_handler(old, new):
     pass
@@ -91,4 +91,9 @@ class Generations(object):
         else:
             return GENERATIONS_DIR + '/' + generation_files[-1]
 
-
+    def delete_old_generations(self):
+        all_generations = self.get_sorted_generation_files()
+        for generation in all_generations[:-1]:
+            path = os.path.join(GENERATIONS_DIR, generation)
+            print("Removing path '{path}'".format(path=path))
+            os.remove(path)

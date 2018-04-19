@@ -9,6 +9,7 @@ setup(
     license='GPLv3',
     version='1.0',
     install_requires=[
+        'click',
         'pydbus',
         'xdg',
     ],
